@@ -1,0 +1,49 @@
+---
+- name: add overlay cvut
+  layman: >
+    name=cvut
+    list_url=http://raw.github.com/cvut/gentoo-overlay/master/overlay.xml
+  tags: [packages, install]
+
+- name: install easy-rsa:3
+  portage: package=app-crypt/easy-rsa:3
+  tags: [packages, install]
+
+- name: prepare directories for PKI
+  file: >
+    path={{ item }}
+    owner=root group=root mode=0750
+    state=directory
+  with_items:
+    - "{{ openvpn_pki_dir }}"
+    - "{{ openvpn_pki_dir }}/private"
+    - "{{ openvpn_pki_dir }}/reqs"
+  tags: install
+
+- name: configure PKI vars
+  template: >
+    src=vars.j2
+    dest={{ openvpn_pki_dir }}/vars
+    owner=root group=root mode=0644
+  tags: config
+
+- name: generate CA
+  command: >
+    easyrsa --batch --req-cn={{ openvpn_pki_ca_cn }} build-ca nopass
+    chdir={{ openvpn_pki_dir }}
+    creates={{ openvpn_ca_path }}
+  tags: keys
+
+- name: generate and sign server certificate
+  command: >
+    easyrsa --batch build-server-full server nopass
+    chdir={{ openvpn_pki_dir }}
+    creates={{ openvpn_server_cert_path }}
+  tags: keys
+
+- name: generate DH key
+  command: >
+    easyrsa --batch --keysize={{ openvpn_pki_dh_key_size }} gen-dh
+    chdir={{ openvpn_pki_dir }}
+    creates={{ openvpn_server_dh_path }}
+  tags: keys

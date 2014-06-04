@@ -1,0 +1,125 @@
+# {{ ansible_managed }}
+
+{% if openvpn_local_ip %}
+# Which local IP address should OpenVPN listen on? (optional)
+local {{ openvpn_local_ip }}
+
+{% endif %}
+# Which TCP/UDP port should OpenVPN listen on?
+port {{ openvpn_port }}
+
+# TCP or UDP server?
+proto {{ openvpn_proto }}
+
+# "dev tun" will create a routed IP tunnel,
+# "dev tap" will create a bridged ethernet tunnel.
+dev {{ openvpn_dev }}
+
+# SSL/TLS root certificate (ca), server certificate (cert) and private key (key).
+ca {{ openvpn_ca_path }}
+cert {{ openvpn_server_cert_path }}
+key {{ openvpn_server_key_path }}
+
+# Diffie-Hellman parameters. Generate your own with:
+#   openssl dhparam -out dh2048.pem 2048
+dh {{ openvpn_server_dh_path }}
+
+{% if openvpn_dev | lower == 'tun' %}
+# Configure server mode for routed tunnel and supply a VPN subnet for OpenVPN
+# to draw client addresses from. The server will take the first address for
+# itself, the rest will be made available to clients.
+server {{ openvpn_server_routed_subnet | ip_cidr2dotted }}
+
+{% else %}
+# Configure server mode for ethernet bridging.
+# Format: <server IP> <netmask> <pool start IP> <pool end IP>
+server-bridge {{ openvpn_server_bridge.server_ip | ip_cidr2dotted }} {{ openvpn_server_bridge.pool_first_ip }} {{ openvpn_server_bridge.pool_last_ip }}
+
+{% endif %}
+# Maintain a record of client virtual IP address associations in this file.
+ifconfig-pool-persist ipp.txt
+
+{% if openvpn_push_routes %}
+# Push routes to the client to allow it to reach other private subnets behind
+# the server. Remember that these private subnets will also need to know to
+# route the OpenVPN client address pool back to the OpenVPN server.
+
+{% for item in openvpn_push_routes %}
+{% if item.comment is defined %}
+# {{ item.comment }}
+{% endif %}
+push "route {{ (item if item is string else item.value) | ip_cidr2dotted }}"
+
+{% endfor %}
+
+{% endif %}
+{% if openvpn_push_dhcp_options %}
+# Push any DHCP options to the client.
+
+{% for item in openvpn_push_dhcp_options %}
+{% if item.comment is defined %}
+# {{ item.comment }}
+{% endif %}
+push "dhcp-option {{ item if item is string else item.value }}"
+
+{% endfor %}
+
+{% endif %}
+# Allow different clients to be able to "see" each other? By default, clients
+# will only see the server.
+{% if not openvpn_c2c_enabled | bool %}#{% endif %}client-to-client
+
+# The keepalive directive causes ping-like messages to be sent back and forth
+# over the link so that each side knows when the other side has gone down. Ping
+# every 10 seconds, assume that remote peer is down if no ping received during
+# a 120 second time period.
+keepalive {{ openvpn_keepalive }}
+
+{% if openvpn_hmac_enabled %}
+# For extra security beyond that provided by SSL/TLS, create an "HMAC firewall"
+# to help block DoS attacks and UDP port flooding. The server and each client
+# must have a copy of this key. The second parameter should be '0' on the
+# server and '1' on the clients.
+tls-auth {{ openvpn_hmac_key_path }} 0
+
+{% endif %}
+{% if openvpn_compression_enabled %}
+# Enable LZO compression on the VPN link. If you enable it here, you must also
+# enable it in the client config file.
+comp-lzo
+
+{% endif %}
+# The maximum number of concurrently connected clients we want to allow.
+max-clients {{ openvpn_max_clients }}
+
+# It's a good idea to reduce the OpenVPN
+# daemon's privileges after initialization.
+user openvpn
+group openvpn
+
+# The persist options will try to avoid accessing certain resources on restart
+# that may no longer be accessible because of the privilege downgrade.
+persist-key
+persist-tun
+
+# Output a short status file showing current connections, truncated and
+# rewritten every minute.
+status /var/log/openvpn-status.log
+
+# By default, log messages will go to the syslog. Use log or log-append to
+# override this default. "log" will truncate the log file on OpenVPN startup,
+# while "log-append" will append to it. Use one or the other (but not both).
+#log         openvpn.log
+#log-append  openvpn.log
+
+# Set the appropriate level of log file verbosity.
+#
+# 0 is silent, except for fatal errors
+# 4 is reasonable for general usage
+# 5 and 6 can help to debug connection problems
+# 9 is extremely verbose
+verb 3
+
+# Silence repeating messages. At most 20 sequential messages of the same
+# message category will be output to the log.
+mute 20

@@ -1,0 +1,137 @@
+# {{ ansible_managed }}
+# Easy-RSA 3 parameter settings
+
+# HOW TO USE THIS FILE
+#
+# vars.example contains built-in examples to Easy-RSA settings. You MUST name
+# this file 'vars' if you want it to be used as a configuration file. If you do
+# not, it WILL NOT be automatically read when you call easyrsa commands.
+#
+# It is not necessary to use this config file unless you wish to change
+# operational defaults. These defaults should be fine for many uses without the
+# need to copy and edit the 'vars' file.
+#
+# All of the editable settings are shown commented and start with the command
+# 'set_var' -- this means any set_var command that is uncommented has been
+# modified by the user. If you're happy with a default, there is no need to
+# define the value to its default.
+
+# A little housekeeping: DON'T EDIT THIS SECTION
+#
+# Easy-RSA 3.x doesn't source into the environment directly.
+# Complain if a user tries to do this:
+if [ -z "$EASYRSA_CALLER" ]; then
+	echo "You appear to be sourcing an Easy-RSA 'vars' file." >&2
+	echo "This is no longer necessary and is disallowed. See the section called" >&2
+	echo "'How to use this file' near the top comments for more details." >&2
+	return 1
+fi
+
+# DO YOUR EDITS BELOW THIS POINT
+
+# This variable should point to the top level of the easy-rsa tree. By default,
+# this is taken to be the directory you are currently in.
+
+#set_var EASYRSA	"$PWD"
+
+# Edit this variable to point to your soon-to-be-created key directory.
+#
+# WARNING: init-pki will do a rm -rf on this directory so make sure you define
+# it correctly! (Interactive mode will prompt before acting.)
+
+set_var EASYRSA_PKI		"$PWD"
+
+# Define X509 DN mode.
+# This is used to adjust what elements are included in the Subject field as the DN
+# (this is the "Distinguished Name.")
+# Note that in cn_only mode the Organizational fields further below aren't used.
+#
+# Choices are:
+#   cn_only  - use just a CN value
+#   org      - use the "traditional" Country/Province/City/Org/OU/email/CN format
+
+#set_var EASYRSA_DN	"cn_only"
+
+# Organizational fields (used with 'org' mode and ignored in 'cn_only' mode.)
+# These are the default values for fields which will be placed in the
+# certificate.  Don't leave any of these fields blank, although interactively
+# you may omit any specific field by typing the "." symbol (not valid for
+# email.)
+
+#set_var EASYRSA_REQ_COUNTRY	"US"
+#set_var EASYRSA_REQ_PROVINCE	"California"
+#set_var EASYRSA_REQ_CITY	"San Francisco"
+#set_var EASYRSA_REQ_ORG	"Copyleft Certificate Co"
+#set_var EASYRSA_REQ_EMAIL	"me@example.net"
+#set_var EASYRSA_REQ_OU		"My Organizational Unit"
+
+# Choose a size in bits for your keypairs. The recommended value is 2048.  Using
+# 2048-bit keys is considered more than sufficient for many years into the
+# future. Larger keysizes will slow down TLS negotiation and make key/DH param
+# generation take much longer. Values up to 4096 should be accepted by most
+# software. Only used when the crypto alg is rsa (see below.)
+
+set_var EASYRSA_KEY_SIZE	{{ openvpn_pki_rsa_key_size }}
+
+# The default crypto mode is rsa; ec can enable elliptic curve support.
+# Note that not all software supports ECC, so use care when enabling it.
+# Choices for crypto alg are: (each in lower-case)
+#  * rsa
+#  * ec
+
+#set_var EASYRSA_ALGO		rsa
+
+# Define the named curve, used in ec mode only:
+
+#set_var EASYRSA_CURVE		secp384r1
+
+# In how many days should the root CA key expire?
+
+set_var EASYRSA_CA_EXPIRE	{{ openvpn_pki_ca_expire_days }}
+
+# In how many days should certificates expire?
+
+set_var EASYRSA_CERT_EXPIRE	{{ openvpn_pki_certs_expire_days }}
+
+# How many days until the next CRL publish date?  Note that the CRL can still be
+# parsed after this timeframe passes. It is only used for an expected next
+# publication date.
+
+#set_var EASYRSA_CRL_DAYS	180
+
+# A temp file used to stage cert extensions during signing. The default should
+# be fine for most users; however, some users might want an alternative under a
+# RAM-based FS, such as /dev/shm or /tmp on some systems.
+
+#set_var EASYRSA_TEMP_FILE	"$PKI_DIR/extensions.temp"
+
+# X509 extensions directory:
+# If you want to customize the X509 extensions used, set the directory to look
+# for extensions here. Each cert type you sign must have a matching filename,
+# and an optional file named 'COMMON' is included first when present. Note that
+# when undefined here, default behaviour is to look in $PKI_DIR first, then
+# fallback to $EASYRSA for the 'x509-types' dir.  You may override this
+# detection with an explicit dir here.
+
+set_var EASYRSA_EXT_DIR		"/usr/share/easy-rsa-3/x509-types"
+
+# OpenSSL config file:
+# If you need to use a specific openssl config file, you can reference it here.
+# Normally this file is auto-detected from a file named openssl-1.0.cnf from the
+# PKI_DIR or EASYRSA dir (in that order.) NOTE that this file is Easy-RSA
+# specific and you cannot just use a standard config file, so this is an
+# advanced feature.
+
+set_var EASYRSA_SSL_CONF	"/usr/share/easy-rsa-3/openssl-1.0.cnf"
+
+# Cryptographic digest to use.
+# Do not change this default unless you understand the security implications.
+# Valid choices include: md5, sha1, sha256, sha224, sha384, sha512
+
+#set_var EASYRSA_DIGEST		"sha256"
+
+# Batch mode. Leave this disabled unless you intend to call Easy-RSA explicitly
+# in batch mode without any user input, confirmation on dangerous operations,
+# or most output. Setting this to any non-blank string enables batch mode.
+
+#set_var EASYRSA_BATCH		""

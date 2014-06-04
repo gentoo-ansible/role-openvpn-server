@@ -1,0 +1,123 @@
+---
+#
+# OpenVPN server
+#
+
+# Which TCP/UDP port should OpenVPN listen on?
+openvpn_port: 1194
+
+# Which local IP address should OpenVPN listen on? (optional)
+openvpn_local_ip:
+
+# Use udp, or tcp?
+openvpn_proto: udp
+
+# Choices:
+# - tun ... a routed IP tunnel
+# - tap ... a bridged ethernet tunnel
+openvpn_dev: tun
+
+# For routed IP tunnel only (tun dev)
+# VPN subnet for the routed tunnel to draw client addresses from. The server
+# will take the first address for itself, the rest will be made available to
+# clients. The subnet's mask may be in CIDR, or dotted notation.
+openvpn_server_routed_subnet: 10.8.0.0/24
+
+# For bridged ethernet tunnel only (tap dev)
+# The value must be hash with:
+#   server_ip:      The VPN server IP address with mask in CIDR, or dotted
+#                   notation.
+#   pool_first_ip:  The first IP address of the addresses pool for clients.
+#   pool_last_ip:   The last IP address of the addresses pool for clients.
+openvpn_server_bridge:
+  server_ip: 10.8.0.4/24
+  pool_first_ip: 10.8.0.50
+  pool_last_ip: 10.8.0.100
+
+# List of routes to push to the client to allow it to reach other private
+# subnets behind the server. Remember that these private subnets will also
+# need to know to route the OpenVPN client address pool back to the OpenVPN
+# server. The subnet's mask may be in CIDR, or dotted notation.
+#
+# Examples:
+# - comment: Route local network
+#   value: 192.168.1.0 255.255.255.0
+# - 192.168.34.0/24
+openvpn_push_routes: []
+
+# List of DHCP options to push to the client.
+#
+# Examples:
+# - comment: Primary DNS server
+#   value: DNS 192.168.34.1
+# - DOMAIN vpn
+openvpn_push_dhcp_options: []
+
+# The keepalive directive causes ping-like messages to be sent back and forth
+# over the link so that each side knows when the other side has gone down. Ping
+# every 10 seconds, assume that remote peer is down if no ping received during
+# a 120 second time period.
+openvpn_keepalive: 10 120
+
+# Allow different clients to be able to "see" each other? By default, clients
+# will only see the server.
+openvpn_c2c_enabled: false
+
+# Whether to enable LZO compression on the VPN link. If you enable it here, you
+# must also enable it in the client config file.
+openvpn_compression_enabled: true
+
+# The maximum number of concurrently connected clients we want to allow.
+openvpn_max_clients: 50
+
+# Whether to enable extra security using a shared HMAC key. The server and each
+# client must have a copy of this key.
+openvpn_hmac_enabled: false
+
+#
+# PKI
+#
+
+# Should we initialize PKI using Easy-RSA?
+openvpn_pki_initialize_enabled: true
+
+# Size of RSA keys to generate in bits.
+openvpn_pki_rsa_key_size: 4096
+
+# Size of a Diffie-Hellman key to generate in bits.
+# Note: Keys longer than 1536 bits takes a VERY LONG time to generate!
+openvpn_pki_dh_key_size: 1024
+
+# In how many days should the root CA key expire?
+openvpn_pki_ca_expire_days: 3650
+
+# In how many days should certificates expire?
+openvpn_pki_certs_expire_days: 3650
+
+# Common name (CN) of the server certificate.
+openvpn_pki_ca_cn: "openvpn-server"
+
+#
+# Paths
+#
+
+# Path of the directory to store configuration files.
+openvpn_conf_dir: /etc/openvpn
+
+# Location of the shared HMAC key.
+openvpn_hmac_key_path: "{{ openvpn_conf_dir }}/ta.key"
+
+# Directory path where to initialize PKI and store certificates.
+openvpn_pki_dir: "{{ openvpn_conf_dir }}/pki"
+
+# Location of the root certificate (CA).
+openvpn_ca_path: "{{ openvpn_pki_dir }}/ca.crt"
+
+# Location of the VPN server certificate.
+openvpn_server_cert_path: "{{ openvpn_pki_dir }}/issued/server.crt"
+
+# Location of the VPN server key.
+openvpn_server_key_path: "{{ openvpn_pki_dir }}/private/server.key"
+
+# Location of the Diffie–Hellman key.
+openvpn_server_dh_path: "{{ openvpn_pki_dir }}/dh.pem"

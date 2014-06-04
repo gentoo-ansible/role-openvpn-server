@@ -1,0 +1,27 @@
+---
+- name: install openvpn
+  portage: package=net-misc/openvpn
+  tags: [packages, install]
+
+- name: install Easy-RSA and initialize PKI
+  include: pki.yml tags=pki
+  when: openvpn_pki_initialize_enabled
+
+- name: generate shared HMAC key
+  command: >
+    openvpn --genkey --secret {{ openvpn_hmac_key_path }}
+    creates={{ openvpn_hmac_key_path }}
+  when: openvpn_hmac_enabled
+  tags: [config, keys]
+
+- name: configure openvpn.conf
+  template: >
+    src=openvpn.conf.j2
+    dest={{ openvpn_conf_dir }}/openvpn.conf
+    owner=root group=root mode=0644
+  notify: restart openvpn
+  tags: config
+
+- name: enable and start openvpn
+  service: name=openvpn enabled=yes state=started
+  tags: services
