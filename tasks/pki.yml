@@ -1,12 +1,7 @@
 ---
-- name: add overlay cvut
-  layman: >
-    name=cvut
-    list_url=http://raw.github.com/cvut/gentoo-overlay/master/overlay.xml
-  tags: [packages, install]
-
-- name: install easy-rsa:3
-  portage: package=app-crypt/easy-rsa:3
+  # ebuild from https://github.com/cvut/gentoo-overlay
+- name: install easy-rsa-3.0.0_rc2
+  portage: package=app-crypt/easy-rsa-3.0.0_rc2
   tags: [packages, install]
 
 - name: prepare directories for PKI
