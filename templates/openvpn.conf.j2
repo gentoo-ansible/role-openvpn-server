@@ -1,3 +1,6 @@
+{% macro ip_cidr2mask(addr) %}
+{{ (addr | ipaddr('ip')) or (addr | ipaddr('network')) }} {{ addr | ipaddr('netmask') -}}
+{% endmacro %}
 # {{ ansible_managed }}
 
 {% if openvpn_local_ip %}
@@ -28,12 +31,12 @@ dh {{ openvpn_server_dh_path }}
 # Configure server mode for routed tunnel and supply a VPN subnet for OpenVPN
 # to draw client addresses from. The server will take the first address for
 # itself, the rest will be made available to clients.
-server {{ openvpn_server_routed_subnet | ip_cidr2dotted }}
+server {{ ip_cidr2mask(openvpn_server_routed_subnet) }}
 
 {% else %}
 # Configure server mode for ethernet bridging.
 # Format: <server IP> <netmask> <pool start IP> <pool end IP>
-server-bridge {{ openvpn_server_bridge.server_ip | ip_cidr2dotted }} {{ openvpn_server_bridge.pool_first_ip }} {{ openvpn_server_bridge.pool_last_ip }}
+server-bridge {{ ip_cidr2mask(openvpn_server_bridge.server_ip) }} {{ openvpn_server_bridge.pool_first_ip }} {{ openvpn_server_bridge.pool_last_ip }}
 
 {% endif %}
 # Maintain a record of client virtual IP address associations in this file.
@@ -48,7 +51,7 @@ ifconfig-pool-persist ipp.txt
 {% if item.comment is defined %}
 # {{ item.comment }}
 {% endif %}
-push "route {{ (item if item is string else item.value) | ip_cidr2dotted }}"
+push "route {{ ip_cidr2mask(item if item is string else item.value) }}"
 
 {% endfor %}
 
