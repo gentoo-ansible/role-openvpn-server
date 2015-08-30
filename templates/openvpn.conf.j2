@@ -49,25 +49,23 @@ ifconfig-pool-persist ipp.txt
 # Push routes to the client to allow it to reach other private subnets behind
 # the server. Remember that these private subnets will also need to know to
 # route the OpenVPN client address pool back to the OpenVPN server.
-
 {% for item in openvpn_push_routes %}
 {% if item.comment is defined %}
+
 # {{ item.comment }}
 {% endif %}
 push "route {{ ip_cidr2mask(item if item is string else item.value) }}"
-
 {% endfor %}
 
 {% endif %}
 {% if openvpn_push_dhcp_options %}
 # Push any DHCP options to the client.
-
 {% for item in openvpn_push_dhcp_options %}
 {% if item.comment is defined %}
+
 # {{ item.comment }}
 {% endif %}
 push "dhcp-option {{ item if item is string else item.value }}"
-
 {% endfor %}
 
 {% endif %}
