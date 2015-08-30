@@ -1,6 +1,9 @@
 {% macro ip_cidr2mask(addr) %}
 {{ (addr | ipaddr('ip')) or (addr | ipaddr('network')) }} {{ addr | ipaddr('netmask') -}}
 {% endmacro %}
+{% macro toggle(option, value) %}
+{{ option if value | bool else '#' + option -}}
+{% endmacro %}
 # {{ ansible_managed }}
 
 {% if openvpn_local_ip %}
@@ -70,7 +73,7 @@ push "dhcp-option {{ item if item is string else item.value }}"
 {% endif %}
 # Allow different clients to be able to "see" each other? By default, clients
 # will only see the server.
-{% if not openvpn_c2c_enabled | bool %}#{% endif %}client-to-client
+{{ toggle('client-to-client', openvpn_c2c_enabled) }}
 
 # The keepalive directive causes ping-like messages to be sent back and forth
 # over the link so that each side knows when the other side has gone down. Ping
@@ -78,20 +81,16 @@ push "dhcp-option {{ item if item is string else item.value }}"
 # a 120 second time period.
 keepalive {{ openvpn_keepalive }}
 
-{% if openvpn_hmac_enabled %}
 # For extra security beyond that provided by SSL/TLS, create an "HMAC firewall"
 # to help block DoS attacks and UDP port flooding. The server and each client
 # must have a copy of this key. The second parameter should be '0' on the
 # server and '1' on the clients.
-tls-auth {{ openvpn_hmac_key_path }} 0
+{{ toggle('tls-auth', openvpn_hmac_enabled) }} {{ openvpn_hmac_key_path }} 0
 
-{% endif %}
-{% if openvpn_compression_enabled %}
 # Enable LZO compression on the VPN link. If you enable it here, you must also
 # enable it in the client config file.
-comp-lzo
+{{ toggle('comp-lzo', openvpn_compression_enabled) }}
 
-{% endif %}
 # The maximum number of concurrently connected clients we want to allow.
 max-clients {{ openvpn_max_clients }}
 
