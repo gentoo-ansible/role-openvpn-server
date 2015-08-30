@@ -7,7 +7,7 @@
 - name: prepare directories for PKI
   file: >
     path={{ item }}
-    owner=root group=root mode=0750
+    owner=root group=root mode=0700
     state=directory
   with_items:
     - "{{ openvpn_pki_dir }}"
