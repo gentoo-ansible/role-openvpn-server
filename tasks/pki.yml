@@ -36,7 +36,7 @@
     creates={{ openvpn_server_cert_path }}
   tags: keys
 
-- name: generate DH key
+- name: generate DH key (this will take a while)
   command: >
     easyrsa --batch --keysize={{ openvpn_pki_dh_key_size }} gen-dh
     chdir={{ openvpn_pki_dir }}
