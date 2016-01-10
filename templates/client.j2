@@ -1,0 +1,18 @@
+{% macro ip_cidr2mask(addr) %}
+{{ (addr | ipaddr('ip')) or (addr | ipaddr('network')) }} {{ addr | ipaddr('netmask') -}}
+{% endmacro %}
+{% for key, val in item.value | dictsort %}
+{%   if key == 'ip' %}
+ifconfig-push {{ ip_cidr2mask(val) }}
+{%   elif key == 'push_routes' %}
+{%     for route in val %}
+push "route {{ ip_cidr2mask(route) }}"
+{%     endfor %}
+{%   elif val is string or val is number %}
+{{ key }} = "{{ val }}"
+{%   else %}
+{%     for v in val %}
+{{ key }} = "{{ v }}"
+{%     endfor %}
+{%   endif %}
+{% endfor %}

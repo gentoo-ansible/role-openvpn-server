@@ -7,6 +7,14 @@
   include: pki.yml tags=pki
   when: openvpn_pki_initialize_enabled
 
+- name: prepare directory for clients configs
+  file: >
+    state=directory
+    path={{ openvpn_clients_conf_dir }}
+    owner=root group=openvpn mode=0750
+  when: openvpn_clients_config
+  tags: install
+
 - name: generate shared HMAC key
   command: >
     openvpn --genkey --secret {{ openvpn_hmac_key_path }}
@@ -20,6 +28,26 @@
     dest={{ openvpn_conf_dir }}/openvpn.conf
     owner=root group=root mode=0644
   notify: restart openvpn
+  tags: config
+
+- name: configure openvpn clients
+  template: >
+    src=client.j2
+    dest="{{ openvpn_clients_conf_dir }}/{{ item.key }}"
+    owner=root group=openvpn mode=0640
+  with_dict: openvpn_clients_config
+  tags: config
+
+# This is quite a workaround so we can use simple "server" directive instead of
+# more complicated setup.
+- name: append custom client IPs to ipp.txt
+  lineinfile: >
+    dest={{ openvpn_conf_dir }}/ipp.txt
+    line={{ item.key }},{{ item.value.ip | ipaddr('ip') }}
+    regexp="^{{ item.key }},"
+    create=yes
+  when: item.value.ip
+  with_dict: openvpn_clients_config
   tags: config
 
 - name: enable and start openvpn

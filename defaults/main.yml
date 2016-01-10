@@ -74,6 +74,19 @@ openvpn_max_clients: 50
 # client must have a copy of this key.
 openvpn_hmac_enabled: false
 
+# Custom config for specific clients.
+# Expects hash with client's commonName as a key and hash with options as
+# a value. The options hash may contain special key "ip" and "push_routes"
+# (see example below) or any valid OpenVPN option.
+#
+# Example:
+#   warrior:
+#     ip: 10.8.0.250/28                      # => ifconfig-push 10.8.0.250 255.255.255.240
+#     push_routes: [ "10.0.5.0/24" ]         # => push "route 10.0.5.0 255.255.255.0"
+#     push: [ "dhcp-option WINS 10.0.5.1" ]  # => push "dhcp-option WINS 10.0.5.1"
+#
+openvpn_clients_config: {}
+
 #
 # PKI
 #
@@ -103,6 +116,9 @@ openvpn_pki_ca_cn: "openvpn-server"
 
 # Path of the directory to store configuration files.
 openvpn_conf_dir: /etc/openvpn
+
+# Path of the directory for custom client config files.
+openvpn_clients_conf_dir: "{{ openvpn_conf_dir }}/clients"
 
 # Location of the shared HMAC key.
 openvpn_hmac_key_path: "{{ openvpn_conf_dir }}/ta.key"

@@ -45,6 +45,11 @@ server-bridge {{ ip_cidr2mask(openvpn_server_bridge.server_ip) }} {{ openvpn_ser
 # Maintain a record of client virtual IP address associations in this file.
 ifconfig-pool-persist ipp.txt
 
+{% if openvpn_clients_config %}
+# Specify a directory dir for custom client config files.
+client-config-dir "{{ openvpn_clients_conf_dir }}"
+
+{% endif %}
 {% if openvpn_push_routes %}
 # Push routes to the client to allow it to reach other private subnets behind
 # the server. Remember that these private subnets will also need to know to
